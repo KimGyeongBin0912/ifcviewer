@@ -28,15 +28,15 @@ const nextConfig = {
         loader: 'babel-loader',
         options: {
           presets: ['@babel/preset-env'],
-          plugins: ['@babel/plugin-transform-runtime'],
-        },
-      },
+          plugins: ['@babel/plugin-transform-runtime']
+        }
+      }
     });
 
     return config;
   },
 
-  // ✅ WASM 정적 경로에 MIME 헤더 강제
+  // ✅ WASM 정적 경로에 MIME 헤더 강제 (MIME 이슈 방지)
   async headers() {
     const base = process.env.NEXT_PUBLIC_BASE_PATH || '';
     return [
@@ -53,7 +53,7 @@ const nextConfig = {
   // (서브경로 배포 시 사용 – 필요 없으면 환경변수 비워두면 됨)
   basePath: process.env.NEXT_PUBLIC_BASE_PATH || '',
 
-  output: 'standalone',
+  // ❌ output: 'standalone' 제거 (정적 청크 404 회피)
   eslint: { ignoreDuringBuilds: true },
   typescript: { ignoreBuildErrors: true },
   images: { unoptimized: true },
