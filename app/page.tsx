@@ -48,7 +48,8 @@ function IFCViewerComponent() {
       try {
         console.log("[v0] Initializing Three.js and web-ifc...")
         const THREE = await import("three")
-        const { OrbitControls } = await import("https://unpkg.com/three@0.144.0/examples/jsm/controls/OrbitControls.js")
+        // ✅ 외부 CDN ESM URL 제거 → 로컬 패키지에서 import
+        const { OrbitControls } = await import("three/examples/jsm/controls/OrbitControls.js")
         const { IfcAPI } = await import("web-ifc")
 
         if (!containerRef.current) {
