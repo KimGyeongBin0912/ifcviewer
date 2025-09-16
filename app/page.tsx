@@ -60,11 +60,14 @@ function IFCViewerComponent() {
         const container = containerRef.current
 
         const ifcApi = new IfcAPI()
-        // ✅ 절대 URL(도메인+basePath)로 고정 – 상대경로로 해석되는 문제 방지
-        const base = process.env.NEXT_PUBLIC_BASE_PATH ?? ""
-        const origin = typeof window !== "undefined" ? window.location.origin : ""
-        const wasmBase = `${origin}${base}/wasm/`
+
+        // ✅ 절대 경로 + basePath 반영 (상대경로로 가던 문제 차단)
+        const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? ""
+        let wasmBase = `${basePath}/wasm/`
+        if (!wasmBase.startsWith("/")) wasmBase = `/${wasmBase}`
+        if (!wasmBase.endsWith("/")) wasmBase = `${wasmBase}/`
         ifcApi.SetWasmPath(wasmBase)
+
         await ifcApi.Init()
         ifcApiRef.current = ifcApi
 
@@ -181,7 +184,7 @@ function IFCViewerComponent() {
         try {
           const expressIds = ifcApiRef.current.GetLineIDsWithType(modelID, ifcType)
           totalElementCount += expressIds.size()
-        } catch (error) {
+        } catch {
           // 타입이 존재하지 않는 경우 무시
         }
       }
