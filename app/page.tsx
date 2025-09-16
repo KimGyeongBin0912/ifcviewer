@@ -60,8 +60,11 @@ function IFCViewerComponent() {
         const container = containerRef.current
 
         const ifcApi = new IfcAPI()
-        // ✅ CDN 대신 로컬 정적 경로로 변경(필수)
-        ifcApi.SetWasmPath("/wasm/")
+        // ✅ 절대 URL(도메인+basePath)로 고정 – 상대경로로 해석되는 문제 방지
+        const base = process.env.NEXT_PUBLIC_BASE_PATH ?? ""
+        const origin = typeof window !== "undefined" ? window.location.origin : ""
+        const wasmBase = `${origin}${base}/wasm/`
+        ifcApi.SetWasmPath(wasmBase)
         await ifcApi.Init()
         ifcApiRef.current = ifcApi
 
@@ -329,21 +332,21 @@ function IFCViewerComponent() {
       const intersects = raycaster.intersectObject(modelRef.current, true)
 
       if (intersects.length > 0) {
-        const mesh = intersects[0].object
+        const mesh = intersects[0].object as any
         const mockProps = {
-          "요소 타입": (mesh as any).userData.typeName || "IFC 요소",
-          "Express ID": (mesh as any).userData.expressId || "알 수 없음",
+          "요소 타입": mesh.userData.typeName || "IFC 요소",
+          "Express ID": mesh.userData.expressId || "알 수 없음",
           위치: `X: ${mesh.position.x.toFixed(2)}, Y: ${mesh.position.y.toFixed(2)}, Z: ${mesh.position.z.toFixed(2)}`,
           크기: `${intersects[0].distance.toFixed(2)}m 거리`,
-          재질: (mesh as any).material ? "표준 재질" : "기본 재질",
-          "면 개수": (mesh as any).geometry ? ((mesh as any).geometry as any).attributes.position.count / 3 : "알 수 없음",
+          재질: mesh.material ? "표준 재질" : "기본 재질",
+          "면 개수": mesh.geometry ? (mesh.geometry as any).attributes.position.count / 3 : "알 수 없음",
         }
 
         setProps(mockProps)
-        setSelectedId((mesh as any).userData.expressId || Math.floor(Math.random() * 1000))
+        setSelectedId(mesh.userData.expressId || Math.floor(Math.random() * 1000))
 
         // 선택된 요소 하이라이트
-        const mat = (mesh as any).material
+        const mat = mesh.material
         if (mat) {
           const originalColor = mat.color?.clone?.()
           mat.color = new (await import("three")).Color(0xff6b35)
