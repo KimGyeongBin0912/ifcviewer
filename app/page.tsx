@@ -48,7 +48,6 @@ function IFCViewerComponent() {
       try {
         console.log("[v0] Initializing Three.js and web-ifc...")
         const THREE = await import("three")
-        // ✅ 외부 CDN ESM URL 제거 → 로컬 패키지에서 import
         const { OrbitControls } = await import("three/examples/jsm/controls/OrbitControls.js")
         const { IfcAPI } = await import("web-ifc")
 
@@ -61,7 +60,8 @@ function IFCViewerComponent() {
         const container = containerRef.current
 
         const ifcApi = new IfcAPI()
-        ifcApi.SetWasmPath("https://cdn.jsdelivr.net/npm/web-ifc@0.0.57/")
+        // ✅ CDN 대신 로컬 정적 경로로 변경(필수)
+        ifcApi.SetWasmPath("/wasm/")
         await ifcApi.Init()
         ifcApiRef.current = ifcApi
 
@@ -331,27 +331,24 @@ function IFCViewerComponent() {
       if (intersects.length > 0) {
         const mesh = intersects[0].object
         const mockProps = {
-          "요소 타입": mesh.userData.typeName || "IFC 요소",
-          "Express ID": mesh.userData.expressId || "알 수 없음",
+          "요소 타입": (mesh as any).userData.typeName || "IFC 요소",
+          "Express ID": (mesh as any).userData.expressId || "알 수 없음",
           위치: `X: ${mesh.position.x.toFixed(2)}, Y: ${mesh.position.y.toFixed(2)}, Z: ${mesh.position.z.toFixed(2)}`,
           크기: `${intersects[0].distance.toFixed(2)}m 거리`,
-          재질: mesh.material ? "표준 재질" : "기본 재질",
-          "면 개수": mesh.geometry ? (mesh.geometry as any).attributes.position.count / 3 : "알 수 없음",
+          재질: (mesh as any).material ? "표준 재질" : "기본 재질",
+          "면 개수": (mesh as any).geometry ? ((mesh as any).geometry as any).attributes.position.count / 3 : "알 수 없음",
         }
 
         setProps(mockProps)
-        setSelectedId(mesh.userData.expressId || Math.floor(Math.random() * 1000))
+        setSelectedId((mesh as any).userData.expressId || Math.floor(Math.random() * 1000))
 
         // 선택된 요소 하이라이트
-        if (mesh.material) {
-          const originalColor = (mesh.material as any).color?.clone()
-          ;(mesh.material as any).color = new THREE.Color(0xff6b35)
-
-          // 2초 후 원래 색상으로 복원
+        const mat = (mesh as any).material
+        if (mat) {
+          const originalColor = mat.color?.clone?.()
+          mat.color = new (await import("three")).Color(0xff6b35)
           setTimeout(() => {
-            if (originalColor) {
-              ;(mesh.material as any).color = originalColor
-            }
+            if (originalColor) mat.color = originalColor
           }, 2000)
         }
 
